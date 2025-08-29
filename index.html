@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API SafeGuard</title>
+
+    <!-- Tailwind CSS para estilização rápida e moderna -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons (versão para JS puro) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Estilos personalizados e configuração do Tailwind -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* Fundo escuro principal */
+            color: #d1d5db; /* Cor de texto padrão */
+        }
+        /* Estilização da barra de rolagem para um visual mais limpo */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+        /* Classes de utilidade para o tema escuro */
+        .card {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 0.75rem;
+        }
+        .input-field {
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            color: #e5e7eb;
+            border-radius: 0.5rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-secondary {
+            background-color: #4b5563;
+            color: white;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #6b7280;
+        }
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+        
+        /* Estilos para a animação do Toast */
+        #toast-notification {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            transform: translateY(200%);
+            opacity: 0;
+        }
+        #toast-notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app">
+
+        <!-- TELA DE LOGIN -->
+        <div id="login-screen" class="flex items-center justify-center min-h-screen">
+            <div class="card w-full max-w-md p-8 shadow-lg">
+                <div class="flex flex-col items-center mb-6">
+                    <div class="mb-4">
+                        <i data-lucide="shield-check" class="w-12 h-12 text-blue-500"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-white">API SafeGuard</h1>
+                    <p class="text-gray-400">Acesse para gerenciar as coleções.</p>
+                </div>
+
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                        <input type="email" id="email" class="input-field w-full px-4 py-2" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Senha</label>
+                        <input type="password" id="password" class="input-field w-full px-4 py-2" required>
+                    </div>
+                    <button type="submit" class="btn-primary w-full py-2.5 font-semibold">Entrar</button>
+                    <p id="login-error" class="text-red-500 text-sm text-center mt-4 h-5"></p>
+                </form>
+                <p class="text-center text-sm text-gray-400 mt-6">
+                    Não tem uma conta?
+                    <button id="go-to-register" class="font-medium text-blue-500 hover:underline">Crie uma aqui</button>
+                </p>
+            </div>
+        </div>
+
+        <!-- TELA DE CADASTRO -->
+        <div id="register-screen" class="hidden flex items-center justify-center min-h-screen">
+            <div class="card w-full max-w-md p-8 shadow-lg">
+                <div class="flex flex-col items-center mb-6">
+                    <div class="mb-4">
+                        <i data-lucide="shield-check" class="w-12 h-12 text-blue-500"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-white">Criar Nova Conta</h1>
+                    <p class="text-gray-400">Preencha os dados para se cadastrar.</p>
+                </div>
+
+                <form id="register-form">
+                    <div class="mb-4">
+                        <label for="register-email" class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                        <input type="email" id="register-email" class="input-field w-full px-4 py-2" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="register-password" class="block text-sm font-medium text-gray-300 mb-2">Senha (mínimo 6 caracteres)</label>
+                        <input type="password" id="register-password" class="input-field w-full px-4 py-2" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="confirm-password" class="block text-sm font-medium text-gray-300 mb-2">Confirmar Senha</label>
+                        <input type="password" id="confirm-password" class="input-field w-full px-4 py-2" required>
+                    </div>
+                    <button type="submit" class="btn-primary w-full py-2.5 font-semibold">Criar Conta</button>
+                    <p id="register-error" class="text-red-500 text-sm text-center mt-4 h-5"></p>
+                </form>
+                 <p class="text-center text-sm text-gray-400 mt-6">
+                    Já tem uma conta?
+                    <button id="go-to-login" class="font-medium text-blue-500 hover:underline">Faça o login</button>
+                </p>
+            </div>
+        </div>
+
+        <!-- APLICAÇÃO PRINCIPAL (PÓS-LOGIN) -->
+        <div id="main-app-screen" class="hidden">
+            <header class="card m-4 p-4 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="shield-check" class="h-8 w-8 text-blue-500"></i>
+                    <h1 class="text-xl font-bold text-white">API SafeGuard</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="user-email" class="text-sm text-gray-400 hidden sm:block"></span>
+                    <button id="logout-button" class="btn-secondary px-4 py-2 text-sm font-medium flex items-center gap-2">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                        Sair
+                    </button>
+                </div>
+            </header>
+
+            <main class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 m-4 h-[calc(100vh-100px)]">
+                <!-- COLUNA DA LISTA DE CLIENTES -->
+                <div class="card p-4 flex flex-col col-span-1">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-white">Clientes</h2>
+                        <button id="add-client-btn" class="btn-primary p-2 rounded-full hover:scale-110 transition-transform">
+                             <i data-lucide="plus" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="relative mb-4">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                           <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        <input type="text" id="search-client" class="input-field w-full pl-10 p-2.5" placeholder="Buscar cliente...">
+                    </div>
+                    <ul id="client-list" class="flex-grow overflow-y-auto pr-2">
+                        <!-- Clientes serão inseridos aqui via JS -->
+                    </ul>
+                </div>
+
+                <!-- COLUNA DE DETALHES DA API -->
+                <div class="card p-6 md:col-span-2 lg:col-span-3 flex flex-col" id="api-details-view">
+                    <div id="empty-state" class="flex flex-col items-center justify-center h-full text-center">
+                        <div class="mb-4">
+                           <i data-lucide="file-search-2" class="w-16 h-16 text-gray-500"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-white">Nenhum cliente selecionado</h3>
+                        <p class="text-gray-400 mt-2">Selecione um cliente na lista à esquerda para ver os detalhes da API.</p>
+                    </div>
+
+                    <div id="details-content" class="hidden h-full flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 id="client-name-details" class="text-2xl font-bold text-white"></h2>
+                                <p class="text-gray-400 text-sm">Coleção Postman (JSON)</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="copy-collection-btn" class="btn-secondary px-4 py-2 text-sm font-medium flex items-center gap-2">
+                                    <i data-lucide="copy" class="w-4 h-4"></i>
+                                    Copiar
+                                </button>
+                                <button id="delete-client-btn" class="btn-danger px-4 py-2 text-sm font-medium flex items-center gap-2">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    Excluir
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex-grow bg-gray-900 rounded-lg p-4 overflow-auto border border-gray-700">
+                            <pre><code id="api-json-content" class="text-sm text-green-300"></code></pre>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+    </div>
+
+    <!-- MODAL DE ADICIONAR CLIENTE -->
+    <div id="add-client-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="card w-full max-w-2xl p-6 relative">
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h2 class="text-xl font-bold text-white mb-4">Adicionar Novo Cliente</h2>
+            <form id="add-client-form">
+                <div class="mb-4">
+                    <label for="client-name" class="block text-sm font-medium text-gray-300 mb-2">Nome do Cliente</label>
+                    <input type="text" id="client-name" class="input-field w-full p-2" required>
+                </div>
+                <div>
+                    <label for="postman-collection" class="block text-sm font-medium text-gray-300 mb-2">Coleção Postman (JSON)</label>
+                    <textarea id="postman-collection" rows="10" class="input-field w-full p-2 font-mono text-sm" placeholder='Cole aqui o JSON exportado do Postman...' required></textarea>
+                </div>
+                <div class="flex justify-end gap-4 mt-6">
+                    <button type="button" id="cancel-modal-btn" class="btn-secondary px-6 py-2">Cancelar</button>
+                    <button type="submit" class="btn-primary px-6 py-2">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast-notification" class="fixed bottom-5 right-5 card px-6 py-3 shadow-lg flex items-center gap-4 z-50">
+        <div id="toast-icon" class="w-6 h-6"></div>
+        <p id="toast-message" class="text-white font-medium"></p>
+    </div>
+
+
+    <script type="module">
+        // =================================================================================
+        // IMPORTAÇÕES DO FIREBASE E INICIALIZAÇÃO
+        // =================================================================================
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getDatabase, ref, set, onValue, push, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        // =================================================================================
+        // !! IMPORTANTE !!
+        // SUBSTITUA O OBJETO ABAIXO PELAS SUAS CREDENCIAIS REAIS DO FIREBASE
+        // =================================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDU-xuTMrE9xzc5Lyg8JChtdpMjyIhvkBE",
+            authDomain: "fir-api-2d29a.firebaseapp.com",
+            databaseURL: "https://fir-api-2d29a-default-rtdb.firebaseio.com",
+            projectId: "fir-api-2d29a",
+            storageBucket: "fir-api-2d29a.appspot.com",
+            messagingSenderId: "966931009306",
+            appId: "1:966931009306:web:4bcdb87cbb483c29b9a6a3"
+        };
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getDatabase(app);
+            
+            initializeAppLogic(auth, db);
+
+        } catch (error) {
+            console.error("Erro na inicialização do Firebase. Verifique suas credenciais no objeto firebaseConfig.", error);
+            document.body.innerHTML = '<div style="color: white; padding: 40px; text-align: center; font-family: sans-serif;"><h1>Erro de Configuração</h1><p>Não foi possível conectar ao Firebase. Verifique as credenciais no seu código e a conexão com a internet. Abra o console do desenvolvedor (F12) para mais detalhes.</p></div>'
+        }
+
+        function initializeAppLogic(auth, db) {
+            
+            // Renderiza todos os ícones com o atributo data-lucide
+            lucide.createIcons();
+
+            // =================================================================================
+            // SELEÇÃO DE ELEMENTOS DO DOM
+            // =================================================================================
+            const loginScreen = document.getElementById('login-screen');
+            const registerScreen = document.getElementById('register-screen');
+            const mainAppScreen = document.getElementById('main-app-screen');
+            
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            
+            const loginError = document.getElementById('login-error');
+            const registerError = document.getElementById('register-error');
+
+            const goToRegisterBtn = document.getElementById('go-to-register');
+            const goToLoginBtn = document.getElementById('go-to-login');
+            
+            const userEmailDisplay = document.getElementById('user-email');
+            const logoutButton = document.getElementById('logout-button');
+            const clientList = document.getElementById('client-list');
+            const apiDetailsView = document.getElementById('api-details-view');
+            const emptyState = document.getElementById('empty-state');
+            const detailsContent = document.getElementById('details-content');
+            const clientNameDetails = document.getElementById('client-name-details');
+            const apiJsonContent = document.getElementById('api-json-content');
+            const addClientBtn = document.getElementById('add-client-btn');
+            const addClientModal = document.getElementById('add-client-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const cancelModalBtn = document.getElementById('cancel-modal-btn');
+            const addClientForm = document.getElementById('add-client-form');
+            const searchClientInput = document.getElementById('search-client');
+            const copyCollectionBtn = document.getElementById('copy-collection-btn');
+            const deleteClientBtn = document.getElementById('delete-client-btn');
+            const toast = document.getElementById('toast-notification');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIconContainer = document.getElementById('toast-icon');
+
+            let clientsData = {}; // Cache local dos clientes para busca
+            let currentClientId = null;
+            
+            // =================================================================================
+            // LÓGICA DE AUTENTICAÇÃO E NAVEGAÇÃO ENTRE TELAS
+            // =================================================================================
+            
+            function showLoginScreen() {
+                loginScreen.classList.remove('hidden');
+                registerScreen.classList.add('hidden');
+            }
+
+            function showRegisterScreen() {
+                loginScreen.classList.add('hidden');
+                registerScreen.classList.remove('hidden');
+            }
+
+            goToRegisterBtn.addEventListener('click', showRegisterScreen);
+            goToLoginBtn.addEventListener('click', showLoginScreen);
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // Usuário está logado
+                    loginScreen.classList.add('hidden');
+                    registerScreen.classList.add('hidden');
+                    mainAppScreen.classList.remove('hidden');
+                    userEmailDisplay.textContent = user.email;
+                    fetchClients();
+                } else {
+                    // Usuário está deslogado
+                    showLoginScreen();
+                    mainAppScreen.classList.add('hidden');
+                    if(clientList) clientList.innerHTML = '';
+                    clientsData = {};
+                    showEmptyState();
+                }
+            });
+
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = loginForm.email.value;
+                const password = loginForm.password.value;
+                loginError.textContent = '';
+
+                signInWithEmailAndPassword(auth, email, password)
+                    .catch((error) => {
+                        console.error("Erro de login:", error.code);
+                        if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                           loginError.textContent = 'Email ou senha inválidos.';
+                        } else {
+                           loginError.textContent = 'Ocorreu um erro ao tentar logar.';
+                        }
+                    });
+            });
+
+            registerForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = registerForm['register-email'].value;
+                const password = registerForm['register-password'].value;
+                const confirmPassword = registerForm['confirm-password'].value;
+                registerError.textContent = '';
+
+                if (password !== confirmPassword) {
+                    registerError.textContent = 'As senhas não coincidem.';
+                    return;
+                }
+
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        showToast('Conta criada com sucesso! Faça o login.', 'success');
+                        registerForm.reset();
+                        showLoginScreen();
+                    })
+                    .catch((error) => {
+                        console.error("Erro de cadastro:", error.code);
+                        if (error.code === 'auth/email-already-in-use') {
+                            registerError.textContent = 'Este email já está em uso.';
+                        } else if (error.code === 'auth/weak-password') {
+                            registerError.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+                        } else {
+                            registerError.textContent = 'Ocorreu um erro ao criar a conta.';
+                        }
+                    });
+            });
+
+            logoutButton.addEventListener('click', () => {
+                signOut(auth);
+            });
+
+            // =================================================================================
+            // LÓGICA DO BANCO DE DADOS (CLIENTES E APIS)
+            // =================================================================================
+            function fetchClients() {
+                const clientsRef = ref(db, 'clients');
+                onValue(clientsRef, (snapshot) => {
+                    const data = snapshot.val();
+                    clientsData = data || {};
+                    renderClientList(clientsData);
+                     // Se o cliente selecionado ainda existir, mantenha-o selecionado
+                    if (currentClientId && clientsData[currentClientId]) {
+                        renderClientList(clientsData); // Re-renderiza para atualizar o estado 'active'
+                    } else if (currentClientId && !clientsData[currentClientId]) {
+                        // Se o cliente selecionado foi excluído
+                        showEmptyState();
+                    }
+                });
+            }
+            
+            function renderClientList(data) {
+                const searchTerm = searchClientInput.value.toLowerCase();
+                clientList.innerHTML = '';
+                const sortedClients = Object.entries(data).sort((a, b) => a[1].name.localeCompare(b[1].name));
+
+                if (sortedClients.length === 0) {
+                     clientList.innerHTML = `<li class="text-center text-gray-500 p-4">Nenhum cliente cadastrado.</li>`;
+                     return;
+                }
+
+                for (const [key, value] of sortedClients) {
+                    if (value.name.toLowerCase().includes(searchTerm)) {
+                        const li = document.createElement('li');
+                        li.className = `p-3 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors mb-2 text-white ${key === currentClientId ? 'bg-blue-600' : 'bg-gray-800'}`;
+                        li.textContent = value.name;
+                        li.dataset.id = key;
+                        li.addEventListener('click', () => {
+                            currentClientId = key;
+                            displayClientDetails(key, value);
+                            // Re-renderiza a lista para destacar o item clicado
+                            renderClientList(clientsData);
+                        });
+                        clientList.appendChild(li);
+                    }
+                }
+            }
+
+            function displayClientDetails(id, data) {
+                currentClientId = id;
+                emptyState.classList.add('hidden');
+                detailsContent.classList.remove('hidden');
+
+                clientNameDetails.textContent = data.name;
+                try {
+                    // Formata o JSON para melhor visualização
+                    const formattedJson = JSON.stringify(data.collection, null, 2);
+                    apiJsonContent.textContent = formattedJson;
+                } catch (error) {
+                    apiJsonContent.textContent = "Erro ao formatar o JSON da coleção.";
+                }
+            }
+
+            function showEmptyState() {
+                currentClientId = null;
+                if(emptyState) emptyState.classList.remove('hidden');
+                if(detailsContent) detailsContent.classList.add('hidden');
+            }
+
+            // =================================================================================
+            // MANIPULAÇÃO DE MODAIS E EVENTOS DE UI
+            // =================================================================================
+            addClientBtn.addEventListener('click', () => addClientModal.classList.remove('hidden'));
+            closeModalBtn.addEventListener('click', () => addClientModal.classList.add('hidden'));
+            cancelModalBtn.addEventListener('click', () => addClientModal.classList.add('hidden'));
+
+            addClientForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const clientName = addClientForm['client-name'].value;
+                const collectionJson = addClientForm['postman-collection'].value;
+
+                try {
+                    const collection = JSON.parse(collectionJson);
+                    const newClientRef = push(ref(db, 'clients'));
+                    set(newClientRef, {
+                        name: clientName,
+                        collection: collection
+                    }).then(() => {
+                        showToast('Cliente adicionado com sucesso!', 'success');
+                        addClientForm.reset();
+                        addClientModal.classList.add('hidden');
+                    }).catch(err => {
+                        showToast('Erro ao salvar no banco de dados.', 'error');
+                    });
+
+                } catch (error) {
+                    showToast('O texto da coleção não é um JSON válido.', 'error');
+                }
+            });
+            
+            searchClientInput.addEventListener('input', () => renderClientList(clientsData));
+
+            copyCollectionBtn.addEventListener('click', () => {
+                if (currentClientId && clientsData[currentClientId]) {
+                    const collectionString = JSON.stringify(clientsData[currentClientId].collection, null, 2);
+                     navigator.clipboard.writeText(collectionString).then(() => {
+                        showToast('Coleção copiada para a área de transferência!', 'success');
+                    }).catch(err => {
+                        showToast('Falha ao copiar a coleção.', 'error');
+                    });
+                }
+            });
+
+            deleteClientBtn.addEventListener('click', () => {
+                if (currentClientId) {
+                    if (confirm(`Tem certeza que deseja excluir o cliente "${clientsData[currentClientId].name}"? Esta ação não pode ser desfeita.`)) {
+                        const clientRef = ref(db, 'clients/' + currentClientId);
+                        remove(clientRef)
+                            .then(() => {
+                                showToast('Cliente excluído com sucesso!', 'success');
+                                showEmptyState();
+                            })
+                            .catch(err => {
+                                 showToast('Erro ao excluir cliente.', 'error');
+                            });
+                    }
+                }
+            });
+
+            // =================================================================================
+            // FUNÇÃO DE NOTIFICAÇÃO (TOAST)
+            // =================================================================================
+            let toastTimeout;
+            function showToast(message, type = 'success') {
+                clearTimeout(toastTimeout);
+                toastMessage.textContent = message;
+                
+                toast.classList.remove('bg-green-500', 'bg-red-500');
+
+                const iconName = type === 'success' ? 'check-circle' : 'x-circle';
+                toastIconContainer.innerHTML = lucide.icons[iconName].toSvg({ class: 'text-white' });
+
+                if (type === 'success') {
+                    toast.classList.add('bg-green-500');
+                } else {
+                    toast.classList.add('bg-red-500');
+                }
+
+                toast.classList.add('show');
+                toastTimeout = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+    </script>
+</body>
+</html>
+
